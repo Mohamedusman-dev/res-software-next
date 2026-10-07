@@ -100,7 +100,7 @@ export default function LoginPage({ onLoginSuccess }) {
       {/* 1. App Window Title Bar */}
       <div className="login-window-bar">
         <div className="login-window-left">
-          <img src="/mr-mango-logo.png" alt="Mr. Mango" style={{ height: '24px', objectFit: 'contain' }} />
+          <img src="https://ik.imagekit.io/aq2gvjkip/food/mr-mango-logo.png" alt="Mr. Mango" style={{ height: '24px', objectFit: 'contain' }} />
         </div>
 
         <div className="login-window-controls">
@@ -131,7 +131,7 @@ export default function LoginPage({ onLoginSuccess }) {
           {/* Logo & Tagline */}
           <div className="login-brand-header">
             <img
-              src="/mr-mango-logo.png"
+              src="https://ik.imagekit.io/aq2gvjkip/food/mr-mango-logo.png"
               alt="Mr. Mango Logo"
               className="mr-mango-login-logo-hero"
             />
@@ -163,7 +163,7 @@ export default function LoginPage({ onLoginSuccess }) {
             {/* Card Logo Header */}
             <div className="card-brand-header">
               <img
-                src="/mr-mango-logo.png"
+                src="https://ik.imagekit.io/aq2gvjkip/food/mr-mango-logo.png"
                 alt="Mr. Mango Logo"
                 className="mr-mango-login-logo-card"
               />

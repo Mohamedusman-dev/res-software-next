@@ -97,6 +97,15 @@ export const subscribeToLiveSync = (onEventReceived) => {
       )
       .on(
         'postgres_changes',
+        { event: '*', schema: 'public', table: 'menu_items' },
+        (payload) => {
+          if (onEventReceived) {
+            onEventReceived({ type: 'MENU_ITEM_UPDATED', payload: payload.new || payload.old });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
         { event: '*', schema: 'public', table: 'live_events' },
         (payload) => {
           if (onEventReceived) {
@@ -149,9 +158,22 @@ export const fetchMenuItems = async () => {
   const { data, error } = await supabase
     .from('menu_items')
     .select('*')
-    .eq('is_available', true)
     .order('name', { ascending: true });
   if (error) console.error('Error fetching menu items:', error);
+  return data || [];
+};
+
+/**
+ * Fetch available menu items from Supabase
+ */
+export const fetchAvailableMenuItems = async () => {
+  if (!isSupabaseConfigured() || !supabase) return [];
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select('*')
+    .eq('is_available', true)
+    .order('name', { ascending: true });
+  if (error) console.error('Error fetching available menu items:', error);
   return data || [];
 };
 
@@ -315,4 +337,46 @@ export const deleteMenuItem = async (menuItemId) => {
     return false;
   }
   return true;
+};
+
+/**
+ * Toggle menu item availability in Supabase
+ */
+export const toggleMenuItemAvailability = async (menuItemId, isAvailable) => {
+  if (!isSupabaseConfigured() || !supabase) return null;
+  const { data, error } = await supabase
+    .from('menu_items')
+    .update({ 
+      is_available: isAvailable, 
+      updated_at: new Date().toISOString() 
+    })
+    .eq('id', menuItemId)
+    .select()
+    .single();
+  if (error) console.error('Error toggling menu item availability:', error);
+  return data;
+};
+
+/**
+ * Fetch pending bills from Supabase
+ */
+export const fetchPendingBills = async () => {
+  if (!isSupabaseConfigured() || !supabase) return [];
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      order_items (
+        id,
+        menu_item_id,
+        quantity,
+        unit_price,
+        special_instructions,
+        status
+      )
+    `)
+    .eq('payment_status', 'pending')
+    .order('created_at', { ascending: false });
+  if (error) console.error('Error fetching pending bills:', error);
+  return data || [];
 };

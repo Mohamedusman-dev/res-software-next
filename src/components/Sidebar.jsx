@@ -58,7 +58,7 @@ export default function Sidebar({ activeNav, setActiveNav, currentUser, onLogout
       <div className="sidebar-brand">
         <div className="brand-logo-container">
           <img
-            src="/mr-mango-logo.png"
+            src="https://ik.imagekit.io/aq2gvjkip/food/mr-mango-logo.png"
             alt="Mr. Mango Logo"
             className="brand-logo-img"
           />
@@ -106,7 +106,7 @@ export default function Sidebar({ activeNav, setActiveNav, currentUser, onLogout
           {/* Food Illustration in Card */}
           <div className="promo-dish-wrapper">
             <img
-              src="/food/promo-dish.jpg"
+              src="https://ik.imagekit.io/aq2gvjkip/food/promo-dish.jpg?updatedAt=1791301143726"
               alt="Delicious Meal"
               className="promo-dish-img"
             />
