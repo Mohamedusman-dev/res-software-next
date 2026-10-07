@@ -23,6 +23,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/biryani.jpg',
     code: 'CB01',
     hasStar: true,
+    isAvailable: true,
   },
   {
     id: 2,
@@ -32,6 +33,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/fried-rice.jpg',
     code: 'VFR02',
     hasStar: false,
+    isAvailable: true,
   },
   {
     id: 3,
@@ -41,6 +43,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/noodles.jpg',
     code: 'HN03',
     hasStar: true,
+    isAvailable: true,
   },
   {
     id: 4,
@@ -50,6 +53,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/chicken-rice.jpg',
     code: 'CR04',
     hasStar: false,
+    isAvailable: true,
   },
   {
     id: 5,
@@ -59,6 +63,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/burger.jpg',
     code: 'VB05',
     hasStar: false,
+    isAvailable: true,
   },
   {
     id: 6,
@@ -68,6 +73,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/fries.jpg',
     code: 'FF06',
     hasStar: false,
+    isAvailable: true,
   },
   {
     id: 7,
@@ -77,6 +83,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/chicken-pizza.jpg',
     code: 'CP07',
     hasStar: false,
+    isAvailable: true,
   },
   {
     id: 8,
@@ -86,6 +93,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/paneer-pizza.jpg',
     code: 'PP08',
     hasStar: false,
+    isAvailable: true,
   },
   {
     id: 9,
@@ -95,6 +103,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/dosa.jpg',
     code: 'MD09',
     hasStar: false,
+    isAvailable: true,
   },
   {
     id: 10,
@@ -104,6 +113,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/idli.jpg',
     code: 'IS10',
     hasStar: false,
+    isAvailable: true,
   },
   {
     id: 11,
@@ -113,6 +123,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/coffee.jpg',
     code: 'CC11',
     hasStar: false,
+    isAvailable: true,
   },
   {
     id: 12,
@@ -122,6 +133,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/lime.jpg',
     code: 'FL12',
     hasStar: false,
+    isAvailable: true,
   },
   {
     id: 13,
@@ -131,6 +143,7 @@ export const INITIAL_MENU_ITEMS = [
     image: '/food/coke.jpg',
     code: 'CK13',
     hasStar: false,
+    isAvailable: true,
   }
 ];
 
@@ -172,4 +185,52 @@ export const TABLES = [
   { id: 'B1', name: 'Table B1', guests: 4, status: 'Available' },
   { id: 'B2', name: 'Table B2', guests: 2, status: 'Occupied' },
   { id: 'VIP1', name: 'VIP Suite 1', guests: 8, status: 'Available' },
+];
+
+// Dummy users for login/switch functionality
+export const DUMMY_USERS = [
+  {
+    id: 'cashier_priya',
+    name: 'Priya (Cashier)',
+    role: 'cashier',
+    roleLabel: 'Billing Cashier',
+    pin: '1234',
+    avatar: '/food/avatar.jpg',
+    color: '#5025d1',
+    badgeBg: '#f5f3ff',
+    defaultTab: 'cashier'
+  },
+  {
+    id: 'waiter_raju',
+    name: 'Raju (Waiter 1)',
+    role: 'waiter',
+    roleLabel: 'Table Captain / Waiter',
+    pin: '1234',
+    avatar: '/food/avatar.jpg',
+    color: '#059669',
+    badgeBg: '#ecfdf5',
+    defaultTab: 'waiter'
+  },
+  {
+    id: 'waiter_karthik',
+    name: 'Karthik (Waiter 2)',
+    role: 'waiter',
+    roleLabel: 'Floor Waiter',
+    pin: '1234',
+    avatar: '/food/avatar.jpg',
+    color: '#0d9488',
+    badgeBg: '#f0fdfa',
+    defaultTab: 'waiter'
+  },
+  {
+    id: 'admin_ramesh',
+    name: 'Ramesh (Manager)',
+    role: 'admin',
+    roleLabel: 'Store Admin / Manager',
+    pin: '9999',
+    avatar: '/food/avatar.jpg',
+    color: '#d97706',
+    badgeBg: '#fffbeb',
+    defaultTab: 'cashier'
+  }
 ];

@@ -5,53 +5,7 @@ import {
   CheckCircle2,
   ChevronRight
 } from 'lucide-react';
-
-export const DUMMY_USERS = [
-  {
-    id: 'cashier_priya',
-    name: 'Priya (Cashier)',
-    role: 'cashier',
-    roleLabel: 'Billing Cashier',
-    pin: '1234',
-    avatar: '/food/avatar.jpg',
-    color: '#5025d1',
-    badgeBg: '#f5f3ff',
-    defaultTab: 'cashier'
-  },
-  {
-    id: 'waiter_raju',
-    name: 'Raju (Waiter 1)',
-    role: 'waiter',
-    roleLabel: 'Table Captain / Waiter',
-    pin: '1234',
-    avatar: '/food/avatar.jpg',
-    color: '#059669',
-    badgeBg: '#ecfdf5',
-    defaultTab: 'waiter'
-  },
-  {
-    id: 'waiter_karthik',
-    name: 'Karthik (Waiter 2)',
-    role: 'waiter',
-    roleLabel: 'Floor Waiter',
-    pin: '1234',
-    avatar: '/food/avatar.jpg',
-    color: '#0d9488',
-    badgeBg: '#f0fdfa',
-    defaultTab: 'waiter'
-  },
-  {
-    id: 'admin_ramesh',
-    name: 'Ramesh (Manager)',
-    role: 'admin',
-    roleLabel: 'Store Admin / Manager',
-    pin: '9999',
-    avatar: '/food/avatar.jpg',
-    color: '#d97706',
-    badgeBg: '#fffbeb',
-    defaultTab: 'cashier'
-  }
-];
+import { DUMMY_USERS } from '../data/menuData';
 
 export default function LoginModal({
   isOpen,

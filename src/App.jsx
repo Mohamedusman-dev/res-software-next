@@ -6,18 +6,19 @@ import OrderPanel from './components/OrderPanel';
 import WaiterPanel from './components/WaiterPanel';
 import PendingBills from './components/PendingBills';
 import MenuManagement from './components/MenuManagement';
+import TableManagement from './components/TableManagement';
+import KitchenDisplaySystem from './components/KitchenDisplaySystem';
 import PaymentModal from './components/PaymentModal';
 import LoginPage from './components/LoginPage';
 import LoginModal from './components/LoginModal';
 import { DiscountModal, CustomItemModal, BarcodeModal } from './components/Modals';
 import { INITIAL_MENU_ITEMS, INITIAL_ORDER } from './data/menuData';
-import { ChefHat, Armchair, BarChart3, Settings } from 'lucide-react';
+import { BarChart3, Settings } from 'lucide-react';
 import { subscribeToLiveSync } from './lib/supabase';
 
 import MobileWaiterApp from './components/MobileWaiterApp';
 
 export default function App() {
-  // Authentication State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -30,7 +31,6 @@ export default function App() {
   const [currentTable, setCurrentTable] = useState('A1');
   const [discountPercent, setDiscountPercent] = useState(0);
 
-  // Modals
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isDiscountOpen, setIsDiscountOpen] = useState(false);
@@ -43,7 +43,6 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 2800);
   };
 
-  // Live Supabase & Realtime Sync Subscription
   useEffect(() => {
     const unsubscribe = subscribeToLiveSync((data) => {
       if (data.type === 'KOT_PUNCHED') {
@@ -51,11 +50,9 @@ export default function App() {
         showToast(`🔥 Realtime Live KOT #${kot.kotNo || ''} received for ${kot.table || 'Table'}!`);
       }
     });
-
     return () => unsubscribe();
   }, []);
 
-  // Full Login from LoginPage
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
     setIsLoggedIn(true);
@@ -65,7 +62,6 @@ export default function App() {
     showToast(`Welcome back, ${user.name}!`);
   };
 
-  // Staff switch from Modal
   const handleSwitchUser = (user) => {
     setCurrentUser(user);
     if (user.defaultTab) {
@@ -74,7 +70,6 @@ export default function App() {
     showToast(`Switched user to ${user.name}`);
   };
 
-  // Logout action
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to log out from POS?')) {
       setIsLoggedIn(false);
@@ -83,7 +78,6 @@ export default function App() {
     }
   };
 
-  // Add Item to Order
   const handleAddToCart = (item) => {
     setOrderItems((prev) => {
       const existing = prev.find((i) => i.id === item.id);
@@ -94,20 +88,13 @@ export default function App() {
       } else {
         return [
           ...prev,
-          {
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: 1,
-            image: item.image,
-          },
+          { id: item.id, name: item.name, price: item.price, quantity: 1, image: item.image },
         ];
       }
     });
     showToast(`Added ${item.name} to order`);
   };
 
-  // Update item quantity
   const handleUpdateQuantity = (id, delta) => {
     setOrderItems((prev) => {
       return prev
@@ -122,13 +109,11 @@ export default function App() {
     });
   };
 
-  // Remove Item
   const handleRemoveItem = (id) => {
     setOrderItems((prev) => prev.filter((item) => item.id !== id));
     showToast('Item removed from order');
   };
 
-  // Clear Order
   const handleClearOrder = () => {
     if (window.confirm('Are you sure you want to clear all items in the current order?')) {
       setOrderItems([]);
@@ -136,39 +121,29 @@ export default function App() {
     }
   };
 
-  // Add Custom Item
   const handleAddCustomItem = (newItem) => {
-    const itemWithId = {
-      ...newItem,
-      id: Date.now(),
-      hasStar: false,
-    };
+    const itemWithId = { ...newItem, id: Date.now(), hasStar: false };
     setMenuItems((prev) => [itemWithId, ...prev]);
     handleAddToCart(itemWithId);
     showToast(`New dish ${newItem.name} created!`);
   };
 
-  // Barcode found
   const handleBarcodeFound = (item) => {
     handleAddToCart(item);
   };
 
-  // Payment success
   const handlePaymentSuccess = () => {
     setOrderItems([]);
     setDiscountPercent(0);
     showToast('Payment successful! Order processed.');
   };
 
-  // Waiter KOT Sent
   const handleSendKOT = (kotData) => {
     showToast(`🔥 KOT ${kotData.kotNo} sent to Kitchen for ${kotData.table}!`);
   };
 
-  // Combined search: header search or sub search
   const effectiveSearch = headerSearch || searchFilter;
 
-  // Calculation for payment modal
   const subtotal = useMemo(
     () => orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [orderItems]
@@ -178,12 +153,10 @@ export default function App() {
   const gst = discountedSubtotal * 0.05;
   const total = discountedSubtotal + gst;
 
-  // If not logged in, render the exact TastyBite Login Screen
   if (!isLoggedIn) {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // If logged in as Waiter, render the Dedicated Mobile Waiter App Interface
   if (currentUser?.role === 'waiter') {
     return (
       <MobileWaiterApp
@@ -195,9 +168,27 @@ export default function App() {
     );
   }
 
+  if (activeNav === 'kitchen') {
+    return (
+      <>
+        <KitchenDisplaySystem />
+        <LoginModal
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+          currentUser={currentUser}
+          onLoginUser={handleSwitchUser}
+        />
+        {toastMessage && (
+          <div className="pos-toast">
+            <span>&#10024; {toastMessage}</span>
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="pos-app-container">
-      {/* 1. Left Sidebar */}
       <Sidebar
         activeNav={activeNav}
         setActiveNav={setActiveNav}
@@ -206,9 +197,7 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      {/* 2. Main Right Area */}
       <div className="pos-main-wrapper">
-        {/* Top Header */}
         <Header
           searchTerm={headerSearch}
           setSearchTerm={setHeaderSearch}
@@ -219,10 +208,8 @@ export default function App() {
           onLogout={handleLogout}
         />
 
-        {/* Dynamic Workspace based on Active Navigation Tab */}
         {activeNav === 'cashier' ? (
           <main className="pos-workspace">
-            {/* Center Menu Grid & Categories */}
             <MenuSection
               menuItems={menuItems}
               selectedCategory={selectedCategory}
@@ -233,8 +220,6 @@ export default function App() {
               onOpenBarcode={() => setIsBarcodeOpen(true)}
               onOpenCustomItem={() => setIsCustomItemOpen(true)}
             />
-
-            {/* Right Order & Billing Panel */}
             <OrderPanel
               orderItems={orderItems}
               onUpdateQuantity={handleUpdateQuantity}
@@ -271,15 +256,15 @@ export default function App() {
               onOpenCustomItem={() => setIsCustomItemOpen(true)}
             />
           </main>
+        ) : activeNav === 'tables' ? (
+          <main className="pos-workspace menu-workspace-mode">
+            <TableManagement />
+          </main>
         ) : (
-          /* Placeholder views for other tabs with direct return */
           <div className="pos-workspace">
             <div className="placeholder-view-container">
-              {activeNav === 'tables' && <Armchair size={54} color="#4f27d9" />}
-              {activeNav === 'kitchen' && <ChefHat size={54} color="#4f27d9" />}
               {activeNav === 'reports' && <BarChart3 size={54} color="#4f27d9" />}
               {activeNav === 'settings' && <Settings size={54} color="#4f27d9" />}
-
               <h2>
                 {activeNav.charAt(0).toUpperCase() + activeNav.slice(1)} Module
               </h2>
@@ -306,7 +291,6 @@ export default function App() {
         )}
       </div>
 
-      {/* Staff Switch / Login Modal */}
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
@@ -314,7 +298,6 @@ export default function App() {
         onLoginUser={handleSwitchUser}
       />
 
-      {/* Payment Checkout Modal */}
       <PaymentModal
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
@@ -328,7 +311,6 @@ export default function App() {
         onPaymentSuccess={handlePaymentSuccess}
       />
 
-      {/* Discount Modal */}
       <DiscountModal
         isOpen={isDiscountOpen}
         onClose={() => setIsDiscountOpen(false)}
@@ -339,14 +321,12 @@ export default function App() {
         }}
       />
 
-      {/* Custom Item Modal */}
       <CustomItemModal
         isOpen={isCustomItemOpen}
         onClose={() => setIsCustomItemOpen(false)}
         onAddCustomItem={handleAddCustomItem}
       />
 
-      {/* Barcode Scanner Simulation Modal */}
       <BarcodeModal
         isOpen={isBarcodeOpen}
         onClose={() => setIsBarcodeOpen(false)}
@@ -354,10 +334,9 @@ export default function App() {
         onBarcodeFound={handleBarcodeFound}
       />
 
-      {/* Floating Toast Notification */}
       {toastMessage && (
         <div className="pos-toast">
-          <span>✨ {toastMessage}</span>
+          <span>&#10024; {toastMessage}</span>
         </div>
       )}
     </div>

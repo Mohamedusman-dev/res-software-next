@@ -1,20 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xyzcompany.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummykey';
+// Supabase environment variables - NO hardcoded fallbacks
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Initialize Supabase Client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Check if valid user Supabase credentials are set
+// Check if valid user Supabase credentials are set BEFORE initialization
 export const isSupabaseConfigured = () => {
-  return (
-    import.meta.env.VITE_SUPABASE_URL &&
-    import.meta.env.VITE_SUPABASE_URL !== 'https://xyzcompany.supabase.co' &&
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
+  return !!(supabaseUrl && supabaseAnonKey);
 };
+
+// Initialize Supabase Client only if credentials are available
+export const supabase = isSupabaseConfigured() 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Fallback Live Real-time Broadcast Channel for multi-tab / local network sync
 const liveBroadcastChannel =
@@ -31,7 +29,7 @@ export const broadcastLiveEvent = (eventType, payload) => {
   }
 
   // Also write to Supabase if configured
-  if (isSupabaseConfigured()) {
+  if (isSupabaseConfigured() && supabase) {
     supabase
       .from('live_events')
       .insert([{ event_type: eventType, payload, created_at: new Date().toISOString() }])
@@ -58,15 +56,51 @@ export const subscribeToLiveSync = (onEventReceived) => {
 
   // 2. Supabase Real-time Postgres Changes Subscription
   let supabaseChannel = null;
-  if (isSupabaseConfigured()) {
+  if (isSupabaseConfigured() && supabase) {
     supabaseChannel = supabase
-      .channel('public:orders_sync')
+      .channel('public:realtime_sync')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
           if (onEventReceived) {
-            onEventReceived({ type: 'KOT_PUNCHED', payload: payload.new || payload.old });
+            onEventReceived({ type: 'ORDER_UPDATED', payload: payload.new || payload.old });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'kot_tickets' },
+        (payload) => {
+          if (onEventReceived) {
+            onEventReceived({ type: 'KOT_UPDATED', payload: payload.new || payload.old });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_items' },
+        (payload) => {
+          if (onEventReceived) {
+            onEventReceived({ type: 'ORDER_ITEM_UPDATED', payload: payload.new || payload.old });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'restaurant_tables' },
+        (payload) => {
+          if (onEventReceived) {
+            onEventReceived({ type: 'TABLE_UPDATED', payload: payload.new || payload.old });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'live_events' },
+        (payload) => {
+          if (onEventReceived) {
+            onEventReceived({ type: 'LIVE_EVENT', payload: payload.new });
           }
         }
       )
@@ -78,8 +112,207 @@ export const subscribeToLiveSync = (onEventReceived) => {
     if (liveBroadcastChannel) {
       liveBroadcastChannel.removeEventListener('message', handleBroadcastMessage);
     }
-    if (supabaseChannel) {
+    if (supabaseChannel && supabase) {
       supabase.removeChannel(supabaseChannel);
     }
   };
+};
+
+/**
+ * Fetch all orders from Supabase
+ */
+export const fetchOrders = async () => {
+  if (!isSupabaseConfigured() || !supabase) return [];
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      order_items (
+        id,
+        menu_item_id,
+        quantity,
+        unit_price,
+        special_instructions,
+        status
+      )
+    `)
+    .order('created_at', { ascending: false });
+  if (error) console.error('Error fetching orders:', error);
+  return data || [];
+};
+
+/**
+ * Fetch all menu items from Supabase
+ */
+export const fetchMenuItems = async () => {
+  if (!isSupabaseConfigured() || !supabase) return [];
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select('*')
+    .eq('is_available', true)
+    .order('name', { ascending: true });
+  if (error) console.error('Error fetching menu items:', error);
+  return data || [];
+};
+
+/**
+ * Fetch all restaurant tables from Supabase
+ */
+export const fetchTables = async () => {
+  if (!isSupabaseConfigured() || !supabase) return [];
+  const { data, error } = await supabase
+    .from('restaurant_tables')
+    .select('*')
+    .order('table_number', { ascending: true });
+  if (error) console.error('Error fetching tables:', error);
+  return data || [];
+};
+
+/**
+ * Create a new order in Supabase
+ */
+export const createOrder = async (orderData) => {
+  if (!isSupabaseConfigured() || !supabase) return null;
+  const { data, error } = await supabase
+    .from('orders')
+    .insert([orderData])
+    .select()
+    .single();
+  if (error) console.error('Error creating order:', error);
+  return data;
+};
+
+/**
+ * Create order items in Supabase
+ */
+export const createOrderItems = async (items) => {
+  if (!isSupabaseConfigured() || !supabase) return [];
+  const { data, error } = await supabase
+    .from('order_items')
+    .insert(items)
+    .select();
+  if (error) console.error('Error creating order items:', error);
+  return data || [];
+};
+
+/**
+ * Update order status in Supabase
+ */
+export const updateOrderStatus = async (orderId, status) => {
+  if (!isSupabaseConfigured() || !supabase) return null;
+  const { data, error } = await supabase
+    .from('orders')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', orderId)
+    .select()
+    .single();
+  if (error) console.error('Error updating order status:', error);
+  return data;
+};
+
+/**
+ * Update order payment status in Supabase
+ */
+export const updateOrderPayment = async (orderId, paymentMethod, paymentStatus) => {
+  if (!isSupabaseConfigured() || !supabase) return null;
+  const { data, error } = await supabase
+    .from('orders')
+    .update({ 
+      payment_method: paymentMethod, 
+      payment_status: paymentStatus,
+      updated_at: new Date().toISOString() 
+    })
+    .eq('id', orderId)
+    .select()
+    .single();
+  if (error) console.error('Error updating order payment:', error);
+  return data;
+};
+
+/**
+ * Create KOT ticket in Supabase
+ */
+export const createKOTTicket = async (kotData) => {
+  if (!isSupabaseConfigured() || !supabase) return null;
+  const { data, error } = await supabase
+    .from('kot_tickets')
+    .insert([kotData])
+    .select()
+    .single();
+  if (error) console.error('Error creating KOT ticket:', error);
+  return data;
+};
+
+/**
+ * Update KOT ticket status in Supabase
+ */
+export const updateKOTStatus = async (kotId, status) => {
+  if (!isSupabaseConfigured() || !supabase) return null;
+  const { data, error } = await supabase
+    .from('kot_tickets')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', kotId)
+    .select()
+    .single();
+  if (error) console.error('Error updating KOT status:', error);
+  return data;
+};
+
+/**
+ * Fetch KOT tickets from Supabase
+ */
+export const fetchKOTTickets = async () => {
+  if (!isSupabaseConfigured() || !supabase) return [];
+  const { data, error } = await supabase
+    .from('kot_tickets')
+    .select('*')
+    .in('status', ['pending', 'preparing'])
+    .order('created_at', { ascending: true });
+  if (error) console.error('Error fetching KOT tickets:', error);
+  return data || [];
+};
+
+/**
+ * Update table status in Supabase
+ */
+export const updateTableStatus = async (tableId, status) => {
+  if (!isSupabaseConfigured() || !supabase) return null;
+  const { data, error } = await supabase
+    .from('restaurant_tables')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', tableId)
+    .select()
+    .single();
+  if (error) console.error('Error updating table status:', error);
+  return data;
+};
+
+/**
+ * Create or update menu item in Supabase
+ */
+export const upsertMenuItem = async (menuItem) => {
+  if (!isSupabaseConfigured() || !supabase) return null;
+  const { data, error } = await supabase
+    .from('menu_items')
+    .upsert(menuItem, { onConflict: 'id' })
+    .select()
+    .single();
+  if (error) console.error('Error upserting menu item:', error);
+  return data;
+};
+
+/**
+ * Delete menu item from Supabase
+ */
+export const deleteMenuItem = async (menuItemId) => {
+  if (!isSupabaseConfigured() || !supabase) return false;
+  const { error } = await supabase
+    .from('menu_items')
+    .delete()
+    .eq('id', menuItemId);
+  if (error) {
+    console.error('Error deleting menu item:', error);
+    return false;
+  }
+  return true;
 };
